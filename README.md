@@ -10,6 +10,14 @@ Este proyecto está liderado por:
 
 El calculo se realizó utilizando el paquete *Foodprice 1.0.0*, desarrollado por la Universidad Javeriana de Cali (Fuente?)
 
+## Composición de la carpeta
+
+La composición de los carpetas sigue el protocolo de manejo de datos de **Plasa Colombia*, el cual estructura la información para su transparencia,  y replicabilidad.
+
+- *input*: Bases de datos sin procesar
+- *Scr*: Códigos de análisis
+- *output*: Bases de datos finales
+
 ## Dinámica del proceso
 
 El flujo de procesamiento compone los siguientes elementos

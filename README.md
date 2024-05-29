@@ -1,4 +1,4 @@
-# Dieta Saludable para Antioquia
+# Costo de la Dieta para Antioquia
 
 En este respositorio se encontrará todos los datos, códigos y procedimientos para la estimación de dieta saludable en Antioquia.
 

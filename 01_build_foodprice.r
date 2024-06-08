@@ -2,6 +2,7 @@ library(tidyverse)
 library(Foodprice)
 library(googlesheets4)
 library(dplyr)
+source("aux_funciones.R")
 
 ### <------ SIPSA_P ------>
     lk <- "https://docs.google.com/spreadsheets/d/1195oJCW_rj1jxiGj2Pb4o8VKSZ717HA7E1GhYoVwlqI/edit?usp=sharing"
@@ -55,7 +56,7 @@ library(dplyr)
 ### <------ SIPSA ------>
 
 # Datos SIPSA
-    sipsa <- readRDS("output/sipsa_dieta_antioquia.rds") %>%
+    sipsa <- fix_sipsa_uni(readRDS("output/sipsa_dieta_antioquia.rds"))  %>%
                 left_join(IPC) %>%
                 mutate(precio_cons=(precio/ipc)*100)
 

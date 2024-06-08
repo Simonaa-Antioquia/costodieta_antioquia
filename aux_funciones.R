@@ -28,27 +28,26 @@ create_food_input <- function(Markup,dt,TCAC_dt) {
     dt <- merge(dt,Markup,by=c("Group","Subgroup"))
     dt <- dt[!duplicated(dt$TCAC),] ## CHECK why repeat
     dt <- dt[!is.na(dt$Serving),]
-    
 
-    ## Precios Corrientes
-    dt_min_c <- dt %>% mutate(Price_100g=precio_corr*(1+(markup_min/100)),
+    ## Precios Corrientes --> precio x kg * markup * 0.1 (conversion a 100g)
+    dt_min_c <- dt %>% mutate(Price_100g=precio_corr*(1+(markup_min/100))*0.1,
                               Price_serving=Price_100g*(Serving_g/Serving)) %>%
                        drop_na(Price_100g)
-    dt_mean_c <- dt %>% mutate(Price_100g=precio_corr*(1+(markup_mean/100)),
+    dt_mean_c <- dt %>% mutate(Price_100g=precio_corr*(1+(markup_mean/100))*0.1,
                               Price_serving=Price_100g*(Serving_g/Serving)) %>%
                         drop_na(Price_100g)
-    dt_max_c <- dt %>% mutate(Price_100g=precio_corr*(1+(markup_max/100)),
+    dt_max_c <- dt %>% mutate(Price_100g=precio_corr*(1+(markup_max/100))*0.1,
                               Price_serving=Price_100g*(Serving_g/Serving)) %>%
                         drop_na(Price_100g)
 
     ## Precios Reales
-    dt_min_r <- dt %>%  mutate(Price_100g=precio_cons*(1+(markup_min/100)),
+    dt_min_r <- dt %>%  mutate(Price_100g=precio_cons*(1+(markup_min/100))*0.1,
                               Price_serving=Price_100g*(Serving_g/Serving)) %>%
                         drop_na(Price_100g)
-    dt_mean_r <- dt %>% mutate(Price_100g=precio_cons*(1+(markup_mean/100)),
+    dt_mean_r <- dt %>% mutate(Price_100g=precio_cons*(1+(markup_mean/100))*0.1,
                               Price_serving=Price_100g*(Serving_g/Serving)) %>%
                         drop_na(Price_100g)
-    dt_max_r <- dt %>% mutate(Price_100g=precio_cons*(1+(markup_max/100)),
+    dt_max_r <- dt %>% mutate(Price_100g=precio_cons*(1+(markup_max/100))*0.1,
                               Price_serving=Price_100g*(Serving_g/Serving))%>%
                         drop_na(Price_100g)
 
@@ -64,7 +63,30 @@ create_food_input <- function(Markup,dt,TCAC_dt) {
 }
 
 
-##### CoCA 01/03 -- cost day of Caloric Adequacy
+##### Fix - SIPSA - Unidades diferentes
+########################################
+
+fix_sipsa_uni <- function(sipsa){
+  
+    ### fix 
+    sipsa <- sipsa %>% mutate(precio=ifelse(
+                # (p1) Aceite vegetal mezcla: PrecioSIPSA*(100/920)
+                SIPSA_P_ID %in% c("P1","P6","P5"),precio*(100/920),
+                # Huevo A: PrecioSIPSA*(100/50)
+                ifelse(SIPSA_P_ID %in% c("P126","P88","P122","P123"),precio*(100/50),
+                # Huevo AA: PrecioSIPSA*(100/60)
+                ifelse(SIPSA_P_ID %in% c("P125","P146"),precio*(100/60),
+                # Huevo AAA: PrecioSIPSA*(100/67)
+                ifelse(SIPSA_P_ID %in% c("P124","P121","P124"),precio*(100/67),
+                # Otros
+                precio)))))
+
+    ### return 
+    return(sipsa)
+}
+
+
+#### CoCA 01/03 -- cost day of Caloric Adequacy
 ########################################
 
 create_CoCA_year_m <- function(mt,an,sipsa) {

@@ -71,13 +71,13 @@ fix_sipsa_uni <- function(sipsa){
     ### fix 
     sipsa <- sipsa %>% mutate(precio=ifelse(
                 # (p1) Aceite vegetal mezcla: PrecioSIPSA*(100/920)
-                SIPSA_P_ID %in% c("P1","P6","P5"),precio*(100/920),
+                SIPSA_P_ID %in% c("P1","P6","P5"),(precio*(100/920))/0.1,
                 # Huevo A: PrecioSIPSA*(100/50)
-                ifelse(SIPSA_P_ID %in% c("P126","P88","P122","P123"),precio*(100/50),
+                ifelse(SIPSA_P_ID %in% c("P126","P88","P122","P123"),(precio*(100/50))/0.1,
                 # Huevo AA: PrecioSIPSA*(100/60)
-                ifelse(SIPSA_P_ID %in% c("P125","P146"),precio*(100/60),
+                ifelse(SIPSA_P_ID %in% c("P125","P146"),(precio*(100/60))/0.1,
                 # Huevo AAA: PrecioSIPSA*(100/67)
-                ifelse(SIPSA_P_ID %in% c("P124","P121","P124"),precio*(100/67),
+                ifelse(SIPSA_P_ID %in% c("P124","P121","P124"),(precio*(100/67))/0.1,
                 # Otros
                 precio)))))
 

@@ -14,6 +14,58 @@ limpiar_texto <- function(cadena) {
   return(cadena)
 }
 
+
+##### Fix - SIPSA - Unidades diferentes
+########################################
+
+fix_sipsa_uni <- function(sipsa){
+  
+    ### fix 
+    sipsa <- sipsa %>% mutate(precio=ifelse(
+                # (p1) Aceite vegetal mezcla: PrecioSIPSA*(1000/920)
+                SIPSA_P_ID %in% c("P1","P6","P5"),(precio*(1000/920)),
+                # Huevo A: PrecioSIPSA*(1000/50)
+                ifelse(SIPSA_P_ID %in% c("P126","P88","P122","P123"),(precio*(1000/50)),
+                # Huevo AA: PrecioSIPSA*(1000/60)
+                ifelse(SIPSA_P_ID %in% c("P125","P146"),(precio*(1000/60)),
+                # Huevo AAA: PrecioSIPSA*(1000/67)
+                ifelse(SIPSA_P_ID %in% c("P124","P121","P124"),(precio*(1000/67)),
+                # Otros
+                precio)))))
+
+    ### return 
+    return(sipsa)
+}
+
+
+##### Crea los precios por 100gr
+########################################
+
+gen_price <- function(mark,dt) {
+
+  ### Data
+  out <- dt[,c(names(dt)[1:27],mark)]
+  names(out) <- c(names(dt)[1:27],"markup")
+
+  ## Funciones para crear los precios
+        out_corr <- out %>% mutate(Price = precio_corr*(1+(markup/100)), # Incluye el markip
+                                  Price_100g = Price*(10/pc), #Se incluye el precio por 100g (1/10) y por porcentaje comestible (pc)
+                                  Price_serving = (Price_100g/100)*Serving_g) %>%
+                            drop_na(Price_100g)
+
+        out_cons <- out %>% mutate(Price = precio_cons*(1+(markup/100)), # Incluye el markip
+                                  Price_100g = Price*(10/pc), #Se incluye el precio por 100g (1/10) y por porcentaje comestible (pc)
+                                  Price_serving = (Price_100g/100)*Serving_g) %>%
+                            drop_na(Price_100g)
+
+  ## Funciones para crear los precios
+  out_corr <- out_corr[,names(data_example)]
+  out_cons <- out_cons[,names(data_example)]
+
+  return(list(corr = out_corr, cons = out_cons))
+
+}
+
 ##### Create Bases de datos - por tipo markap
 ########################################
 
@@ -28,63 +80,36 @@ create_food_input <- function(Markup,dt,TCAC_dt) {
     dt <- merge(dt,Markup,by=c("Group","Subgroup"))
     dt <- dt[!duplicated(dt$TCAC),] ## CHECK why repeat
     dt <- dt[!is.na(dt$Serving),]
+    dt <- dt[!is.na(dt$pc),]
 
-    ## Precios Corrientes --> precio x kg * markup * 0.1 (conversion a 100g)
-    dt_min_c <- dt %>% mutate(Price_100g=precio_corr*(1+(markup_min/100))*0.1,
-                              Price_serving=Price_100g*(Serving_g/Serving)) %>%
-                       drop_na(Price_100g)
-    dt_mean_c <- dt %>% mutate(Price_100g=precio_corr*(1+(markup_mean/100))*0.1,
-                              Price_serving=Price_100g*(Serving_g/Serving)) %>%
-                        drop_na(Price_100g)
-    dt_max_c <- dt %>% mutate(Price_100g=precio_corr*(1+(markup_max/100))*0.1,
-                              Price_serving=Price_100g*(Serving_g/Serving)) %>%
-                        drop_na(Price_100g)
-
-    ## Precios Reales
-    dt_min_r <- dt %>%  mutate(Price_100g=precio_cons*(1+(markup_min/100))*0.1,
-                              Price_serving=Price_100g*(Serving_g/Serving)) %>%
-                        drop_na(Price_100g)
-    dt_mean_r <- dt %>% mutate(Price_100g=precio_cons*(1+(markup_mean/100))*0.1,
-                              Price_serving=Price_100g*(Serving_g/Serving)) %>%
-                        drop_na(Price_100g)
-    dt_max_r <- dt %>% mutate(Price_100g=precio_cons*(1+(markup_max/100))*0.1,
-                              Price_serving=Price_100g*(Serving_g/Serving))%>%
-                        drop_na(Price_100g)
-
-    ## Keep structue
-    dt_min_c=dt_min_c[,names(data_example)]
-    dt_mean_c=dt_mean_c[,names(data_example)]
-    dt_max_c=dt_max_c[,names(data_example)]
-    dt_min_r=dt_min_r[,names(data_example)]
-    dt_mean_r=dt_mean_r[,names(data_example)]
-    dt_max_r=dt_max_r[,names(data_example)]
-
-    return(list(dt_min_c = dt_min_c, dt_mean_c = dt_mean_c, dt_max_c = dt_max_c, dt_min_r = dt_min_r, dt_mean_r = dt_mean_r, dt_max_r = dt_max_r))
+    ### Create data for out
+    return(list(dt_min_c = gen_price("markup_min",dt)$corr,
+                dt_min_r = gen_price("markup_min",dt)$cons, 
+                dt_mean_c = gen_price("markup_mean",dt)$corr,
+                dt_mean_r = gen_price("markup_mean",dt)$cons, 
+                dt_max_c = gen_price("markup_max",dt)$corr, 
+                dt_max_r = gen_price("markup_max",dt)$cons))
 }
 
 
-##### Fix - SIPSA - Unidades diferentes
+
+#### Create Diverse data - Only one data set
 ########################################
 
-fix_sipsa_uni <- function(sipsa){
+create_data_food <- function(mt,an,sipsa) {
+
+  dt <- sipsa %>% filter(ano==an & mes==mt) 
+  dt <- dt[,c("SIPSA_P_ID","alimento","precio","precio_cons")]
+  dt <- merge(dt,sipsa_p_c,by="SIPSA_P_ID")
+  ### make sure we only have one food
+  dt <- dt %>% group_by(TCAC,alimento) %>% 
+    summarise(precio_corr=mean(precio),
+              precio_cons=mean(precio_cons))
   
-    ### fix 
-    sipsa <- sipsa %>% mutate(precio=ifelse(
-                # (p1) Aceite vegetal mezcla: PrecioSIPSA*(100/920)
-                SIPSA_P_ID %in% c("P1","P6","P5"),(precio*(100/920))/0.1,
-                # Huevo A: PrecioSIPSA*(100/50)
-                ifelse(SIPSA_P_ID %in% c("P126","P88","P122","P123"),(precio*(100/50))/0.1,
-                # Huevo AA: PrecioSIPSA*(100/60)
-                ifelse(SIPSA_P_ID %in% c("P125","P146"),(precio*(100/60))/0.1,
-                # Huevo AAA: PrecioSIPSA*(100/67)
-                ifelse(SIPSA_P_ID %in% c("P124","P121","P124"),(precio*(100/67))/0.1,
-                # Otros
-                precio)))))
+  data_food <- create_food_input(Markup,dt,TCAC_dt)
 
-    ### return 
-    return(sipsa)
+  return(data_food)
 }
-
 
 #### CoCA 01/03 -- cost day of Caloric Adequacy
 ########################################

@@ -40,12 +40,7 @@ source("aux_funciones.R")
     TCAC_dt <- TCAC_raw[, c(1,3,4,6,8:24)]
     nam <- names(data_example)
     names(TCAC_dt)[5:21] <- nam[8:24]
-    names(TCAC_dt)[1:4] <- c("TCAC","Grupo_GABAS","Subgrupo_GABAS","pc")
-    TCAC_dt$pc <- as.numeric(TCAC_dt$pc)/100
-
-    # Incluir Serving (valor de referencia en gramos de porción comestible (100 gramos para todos los alimentos).
-    TCAC_dt$Serving <- 100
-
+    names(TCAC_dt)[1:4] <- c("TCAC","Grupo_GABAS","Subgrupo_GABAS","Serving")
     TCAC_dt <- TCAC_dt %>% left_join(Grupos_food_small) %>%  
                             select(-Grupo_GABAS,-Subgrupo_GABAS)
     # Fixing serving (% de parte comestible)
@@ -138,9 +133,3 @@ source("aux_funciones.R")
     
     # Sheets 
     sheet_write(ss, data = out, sheet = "CostoDieta_Antioquia_wide")
-    
-
-
-
-    
-

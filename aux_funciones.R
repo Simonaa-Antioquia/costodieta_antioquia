@@ -49,12 +49,12 @@ gen_price <- function(mark,dt) {
 
   ## Funciones para crear los precios
         out_corr <- out %>% mutate(Price = precio_corr*(1+(markup/100)), # Incluye el markip
-                                  Price_100g = Price*(10/pc), #Se incluye el precio por 100g (1/10) y por porcentaje comestible (pc)
+                                  Price_100g = Price*((1/10)*pc), #Se incluye el precio por 100g (1/10) y por porcentaje comestible (pc)
                                   Price_serving = (Price_100g/100)*Serving_g) %>%
                             drop_na(Price_100g)
 
         out_cons <- out %>% mutate(Price = precio_cons*(1+(markup/100)), # Incluye el markip
-                                  Price_100g = Price*(10/pc), #Se incluye el precio por 100g (1/10) y por porcentaje comestible (pc)
+                                  Price_100g = Price*((1/10)*pc), #Se incluye el precio por 100g (1/10) y por porcentaje comestible (pc)
                                   Price_serving = (Price_100g/100)*Serving_g) %>%
                             drop_na(Price_100g)
 
